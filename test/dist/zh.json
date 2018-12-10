@@ -1,3 +1,6 @@
 {
-  "name":"摩根大通"
+    "name|names": "摩根大通",
+    "title": "这是测试2",
+    "age|ages": "30",
+    "citys|city": "北京"
 }

@@ -16,6 +16,4 @@ describe('file-differ-forms', function () {
 
     })
 
-
-
 })

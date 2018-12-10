@@ -16,32 +16,87 @@ module.exports = function (opt) {
     // Comparison app file
     Comp.ComparisonPcsFile = fs.readFileSync($pcsFile+$mainTps).toString();
 
-    function DataTraversal(app,pcs,ComparisonAppFile,ComparisonPcsFile,ExportdocumentsFile) {
+    function DataTraversal(app, pcs, filter, ComparisonAppFile, ComparisonPcsFile, ExportdocumentsFile) {
+
         if(app === pcs)
         {
             if(ComparisonAppFile[app] === ComparisonPcsFile[app])
             {
                 ExportdocumentsFile[app] = ComparisonAppFile[app];
             }
-            else console.error(`ERROR: { ${app}:${ComparisonAppFile[app]} } | { ${pcs}:${ComparisonPcsFile[pcs]} }`)
+            else console.error(`ERROR: app:{ ${app}:${ComparisonAppFile[app]} } | pcs:{ ${pcs}:${ComparisonPcsFile[pcs]} }`)
         }
         else
         {
-            ExportdocumentsFile[app] = ComparisonAppFile[app];
-            ExportdocumentsFile[pcs] = ComparisonPcsFile[pcs];
+
+            if(ComparisonAppFile[app] === ComparisonPcsFile[pcs])
+            {
+                ExportdocumentsFile[app+'|'+pcs] = ComparisonAppFile[app]
+                filter.push(app)
+                filter.push(pcs)
+            }
+
+            if(!filter.includes(app)) ExportdocumentsFile[app] = ComparisonAppFile[app];
+            else
+            {
+                if(ExportdocumentsFile[app]) delete ExportdocumentsFile[app];
+            }
+
+            if(!filter.includes(pcs)) ExportdocumentsFile[pcs] = ComparisonPcsFile[pcs];
+            else
+            {
+                if(ExportdocumentsFile[pcs]) delete ExportdocumentsFile[pcs];
+            }
+
         }
+
     }
 
-    function DataNewView(files, comFile, url){
+    function DataNewView(types, files, comFile, url){
         files.forEach(function(key) {
             if(key != $mainTps)
             {
                 let oldFiles = JSON.parse(fs.readFileSync($xlsFile+key).toString());
+                let ferFiles = {};
                 let newFiles = {};
 
-                for(let app in comFile) {
-                    for(let xls in oldFiles) {
-                        if(app == xls) newFiles[app] = oldFiles[app]
+                if(types === 'xlsFile')
+                {
+                    for(let app in comFile) {
+                        if(Object.keys(oldFiles).length === 0) newFiles[app] = "";
+                        else {
+                            for(let xls in oldFiles) {
+                                if(app === xls) newFiles[app] = oldFiles[app];
+                                else {
+                                    if(!oldFiles[app]) newFiles[app] = "";
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    let historyFile = JSON.parse(fs.readFileSync(url+key).toString());
+
+                    if(Object.keys(oldFiles).length != 0)
+                    {
+                        for(let app in oldFiles) {
+                            if(app.includes('|')) app.split('|').forEach((key) => {
+                                ferFiles[key] = oldFiles[app]
+                            }); else ferFiles[app] = oldFiles[app];
+                        }
+
+                        for(let old in historyFile) {
+                            for(let all in ferFiles) {
+                                if(old == all) newFiles[old] = ferFiles[old].length != 0 ? ferFiles[old] : historyFile[old];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for(let old in historyFile) {
+                            newFiles[old] = historyFile[old];
+                        }
                     }
                 }
                 //打印文件
@@ -64,6 +119,7 @@ module.exports = function (opt) {
         {
             let ComparisonAppFile = JSON.parse(Comp.ComparisonAppFile),
                 ComparisonPcsFile = JSON.parse(Comp.ComparisonPcsFile),
+                filter = [],
                 ExportdocumentsFile = {},
                 GxportdocumentsFile = {},
                 OxportdocumentsFile = {};
@@ -72,13 +128,13 @@ module.exports = function (opt) {
             if(Object.keys(ComparisonAppFile).length >= Object.keys(ComparisonPcsFile).length)
             {
                 for(let app in ComparisonAppFile) {
-                    for(let pcs in ComparisonPcsFile) DataTraversal(app, pcs, ComparisonAppFile, ComparisonPcsFile, ExportdocumentsFile);
+                    for(let pcs in ComparisonPcsFile) DataTraversal(app, pcs, filter, ComparisonAppFile, ComparisonPcsFile, ExportdocumentsFile);
                 }
             }
             else
             {
                 for(let pcs in ComparisonPcsFile) {
-                    for(let app in ComparisonAppFile) DataTraversal(app, pcs, ComparisonAppFile, ComparisonPcsFile, ExportdocumentsFile);
+                    for(let app in ComparisonAppFile) DataTraversal(app, pcs, filter, ComparisonAppFile, ComparisonPcsFile, ExportdocumentsFile);
                 }
             }
             //初始化后生成文件排序
@@ -104,14 +160,16 @@ module.exports = function (opt) {
                 if (err) {
                     return console.error(err);
                 }
+
+                DataNewView('xlsFile', files, OxportdocumentsFile, $xlsFile);
             })
         }
 
         //数据更新
         if(files.length != 0)
         {
-            DataNewView(files, JSON.parse(Comp.ComparisonAppFile), $appFile);
-            DataNewView(files, JSON.parse(Comp.ComparisonPcsFile), $pcsFile);
+            DataNewView('appFile', files, JSON.parse(Comp.ComparisonAppFile), $appFile);
+            DataNewView('pcsFile', files, JSON.parse(Comp.ComparisonPcsFile), $pcsFile);
         }
 
     })

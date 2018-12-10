@@ -1,6 +1,6 @@
 {
   "name": "file-differ-forms",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "分析两个不同文件的差异，并合并生成新的类型文件",
   "main": "index.js",
   "scripts": {
