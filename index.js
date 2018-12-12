@@ -60,51 +60,88 @@ module.exports = function (opt) {
                 let ferFiles = {};
                 let newFiles = {};
 
-                if(types === 'xlsFile')
-                {
-                    for(let app in comFile) {
-                        if(Object.keys(oldFiles).length === 0) newFiles[app] = "";
-                        else {
-                            for(let xls in oldFiles) {
-                                if(app === xls) newFiles[app] = oldFiles[app];
-                                else {
-                                    if(!oldFiles[app]) newFiles[app] = "";
+                try {
+
+                    if(types === 'xlsFile')
+                    {
+
+                        for(let app in comFile) {
+                            if(Object.keys(oldFiles).length === 0) newFiles[app] = "";
+                            else {
+                                for(let xls in oldFiles) {
+                                    if(app === xls) newFiles[app] = oldFiles[app];
+                                    else {
+                                        if(!oldFiles[app]) newFiles[app] = "";
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-                else
-                {
-                    let historyFile = JSON.parse(fs.readFileSync(url+key).toString());
-
-                    if(Object.keys(oldFiles).length != 0)
-                    {
-                        for(let app in oldFiles) {
-                            if(app.includes('|')) app.split('|').forEach((key) => {
-                                ferFiles[key] = oldFiles[app]
-                            }); else ferFiles[app] = oldFiles[app];
-                        }
-
-                        for(let old in historyFile) {
-                            for(let all in ferFiles) {
-                                if(old == all) newFiles[old] = ferFiles[old].length != 0 ? ferFiles[old] : historyFile[old];
+                        //打印文件
+                        fs.writeFile(url+key,JSON.stringify(newFiles,null,4),'utf8',function (err) {
+                            if (err) {
+                                return console.error(err);
                             }
-                        }
+                        })
+
                     }
                     else
                     {
-                        for(let old in historyFile) {
-                            newFiles[old] = historyFile[old];
-                        }
+
+                        fs.exists(url+key, exists => {
+
+                            if(exists) {
+
+                                let historyFile = JSON.parse(fs.readFileSync(url+key).toString());
+                                if(Object.keys(oldFiles).length != 0)
+                                {
+                                    for(let app in oldFiles) {
+                                        if(app.includes('|')) app.split('|').forEach((key) => {
+                                            ferFiles[key] = oldFiles[app]
+                                        }); else ferFiles[app] = oldFiles[app];
+                                    }
+
+                                    for(let old in historyFile) {
+                                        for(let all in ferFiles) {
+                                            if(old == all) newFiles[old] = ferFiles[old].length != 0 ? ferFiles[old] : historyFile[old];
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    for(let old in historyFile) {
+                                        newFiles[old] = historyFile[old];
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                for(let app in oldFiles) {
+                                    if(app.includes('|')) app.split('|').forEach((key) => {
+                                        ferFiles[key] = oldFiles[app]
+                                    }); else ferFiles[app] = oldFiles[app];
+                                }
+                                for(let old in comFile) {
+                                    for(let all in ferFiles) {
+                                        if(old == all) newFiles[old] = ferFiles[old];
+                                    }
+                                }
+                            }
+
+                            //打印文件
+                            fs.writeFile(url+key,JSON.stringify(newFiles,null,4),'utf8',function (err) {
+                                if (err) {
+                                    return console.error(err);
+                                }
+                            })
+
+                        });
+
                     }
+
+                } catch (e) {
+                    console.error(e);
                 }
-                //打印文件
-                fs.writeFile(url+key,JSON.stringify(newFiles,null,4),'utf8',function (err) {
-                    if (err) {
-                        return console.error(err);
-                    }
-                })
             }
         })
     }
@@ -138,31 +175,37 @@ module.exports = function (opt) {
                 }
             }
             //初始化后生成文件排序
-            if(files.length == 0)
-            {
-                OxportdocumentsFile = ExportdocumentsFile;
-            }
-            else
-            {
-                for(let all in ExportdocumentsFile) {
-                    for(let oxp in JSON.parse(fs.readFileSync($xlsFile+$mainTps).toString())) {
-                        if(oxp == all){
-                            OxportdocumentsFile[all] = ExportdocumentsFile[all];
-                        } else {
-                            GxportdocumentsFile[all] = ExportdocumentsFile[all];
+            try {
+
+                if(files.length == 0)
+                {
+                    OxportdocumentsFile = ExportdocumentsFile;
+                }
+                else
+                {
+                    for(let all in ExportdocumentsFile) {
+                        for(let oxp in JSON.parse(fs.readFileSync($xlsFile+$mainTps).toString())) {
+                            if(oxp == all){
+                                OxportdocumentsFile[all] = ExportdocumentsFile[all];
+                            } else {
+                                GxportdocumentsFile[all] = ExportdocumentsFile[all];
+                            }
                         }
                     }
+                    Object.assign(OxportdocumentsFile,GxportdocumentsFile);
                 }
-                Object.assign(OxportdocumentsFile,GxportdocumentsFile);
-            }
-            //打印文件
-            fs.writeFile($xlsFile+$mainTps,JSON.stringify(OxportdocumentsFile,null,4),'utf8',function (err) {
-                if (err) {
-                    return console.error(err);
-                }
+                //打印文件
+                fs.writeFile($xlsFile+$mainTps,JSON.stringify(OxportdocumentsFile,null,4),'utf8',function (err) {
+                    if (err) {
+                        return console.error(err);
+                    }
 
-                DataNewView('xlsFile', files, OxportdocumentsFile, $xlsFile);
-            })
+                    DataNewView('xlsFile', files, OxportdocumentsFile, $xlsFile);
+                })
+
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         //数据更新
