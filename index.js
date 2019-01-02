@@ -22,10 +22,10 @@ module.exports = function (opt) {
     Comp.ComparisonPcsFile = fs.readFileSync($pcsFile+$mainTps).toString();
 
     let
-    ComparisonAppFile = Comp.ComparisonAppFile.length != 0 ? JSON.parse(Comp.ComparisonAppFile) : '',
-    ComparisonPcsFile = Comp.ComparisonPcsFile.length != 0 ? JSON.parse(Comp.ComparisonPcsFile) : '',
-    ComparisonAppReaddir = [],
-    ComparisonPcsReaddir = [];
+        ComparisonAppFile = Comp.ComparisonAppFile.length != 0 ? JSON.parse(Comp.ComparisonAppFile) : '',
+        ComparisonPcsFile = Comp.ComparisonPcsFile.length != 0 ? JSON.parse(Comp.ComparisonPcsFile) : '',
+        ComparisonAppReaddir = [],
+        ComparisonPcsReaddir = [];
 
     if(ComparisonAppFile === '' || ComparisonPcsFile === '') {
         return console.error('No content in the table.')
@@ -92,6 +92,8 @@ module.exports = function (opt) {
             }
 
         }
+
+        newDateElse = proFiles;
 
         for (let datas in proFiles) {
             for (let news in newFileElse) {
@@ -265,9 +267,10 @@ module.exports = function (opt) {
             if(files.length !== 0) files.forEach(function (key) {
                 if(key !== $mainTps) {
                     let xlsComparisonElseFile = JSON.parse(fs.readFileSync($xlsFile + key).toString()), xlsElArray = [];
+
                     for (let xlsEl in xlsComparisonElseFile) {
                         xlsElArray.push(xlsEl);
-                        if(xlsComparisonElseFile[xlsEl] === '') return history.status = 'not';
+                        if(xlsComparisonElseFile[xlsEl] === '') return history.status = 'not'; else history.status = '';
                     }
 
                     // 通用中文表与其他语言表 条数 | 属性名 必须保存一致，否则直接报错
@@ -299,6 +302,7 @@ module.exports = function (opt) {
                     }
                 }
                 Oxportdocuments = Gxportdocuments;
+                console.error('not：There is empty data, and the modification|delete operation is removed.')
             }
 
             // 初始值打印
