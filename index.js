@@ -267,10 +267,21 @@ module.exports = function (opt) {
             if(files.length !== 0) files.forEach(function (key) {
                 if(key !== $mainTps) {
                     let xlsComparisonElseFile = JSON.parse(fs.readFileSync($xlsFile + key).toString()), xlsElArray = [];
+                    let // 如果项目中存在该文件则执行
+                        projectComparisonApp = JSON.parse(fs.readFileSync($appFile+key).toString()),
+                        projectComparisonPcs = JSON.parse(fs.readFileSync($pcsFile+key).toString());
 
                     for (let xlsEl in xlsComparisonElseFile) {
                         xlsElArray.push(xlsEl);
                         if(xlsComparisonElseFile[xlsEl] === '') return history.status = 'not'; else history.status = '';
+                    }
+
+
+                    // 本地其他语言表条数 必须 和 中文表 相同
+                    if( Object.keys(projectComparisonApp).length !== Object.keys(ComparisonAppFile).length &&
+                        Object.keys(projectComparisonPcs).length !== Object.keys(ComparisonPcsFile).length)
+                    {
+                        throw new Error('Inconsistent number of internal data.');
                     }
 
                     // 通用中文表与其他语言表 条数 | 属性名 必须保存一致，否则直接报错
@@ -372,7 +383,7 @@ module.exports = function (opt) {
                                         Deduplication++;
                                     })
 
-                                } else throw new Error('Inconsistent number of data.');
+                                } else throw new Error('Inconsistent number of internal data.');
 
 
                             } catch (e) {
